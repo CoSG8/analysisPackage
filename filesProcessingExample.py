@@ -13,7 +13,6 @@ from IPython.core.display import display
 
 
 # Initialization
-
 interval = 0
 frameNum = 0
 recFrameNum = 0
@@ -22,8 +21,6 @@ sumVal = 0
 preSumVal = 0
 addFrame = 0
 startFrame = []
-endFrame = []
-duration = []
 
 bRecording = False
 bLED = False
@@ -40,8 +37,7 @@ for i in range(256):
 
 
 # Define functions
-def videoAnalysis(videofile_path):
-
+def CheckLEDPos(videofile_path):
     frameNum = 0
     interval = 0
     ESC_KEY = 0x1b # Esc キー
@@ -50,13 +46,6 @@ def videoAnalysis(videofile_path):
 
     fName = os.path.basename(os.path.splitext(videofile_path)[0])
     fNameExt = os.path.basename(os.path.splitext(videofile_path)[1])
-
-    pathTemp = [os.path.dirname(os.path.splitext(videofile_path)[0]),fName + '_trimmed']
-    savePath = os.path.join(*pathTemp)
-    os.makedirs(savePath, exist_ok=True)
-    pathTemp = [savePath,fName + "_trimmed_log.txt"]
-    txtPath = os.path.join(*pathTemp)
-
 
     cap = cv2.VideoCapture(videofile_path)
     totalFrameNum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -82,6 +71,34 @@ def videoAnalysis(videofile_path):
 
         ret, frame = cap.read()
         frameNum += 1
+        if frameNum > 1:
+            break
+
+    cv2.waitKey(1)    
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
+
+
+def videoAnalysis(videofile_path):
+
+    frameNum = 0
+    interval = 0
+    fName = os.path.basename(os.path.splitext(videofile_path)[0])
+    fNameExt = os.path.basename(os.path.splitext(videofile_path)[1])
+
+    pathTemp = [os.path.dirname(os.path.splitext(videofile_path)[0]),fName + '_trimmed']
+    savePath = os.path.join(*pathTemp)
+    os.makedirs(savePath, exist_ok=True)
+    pathTemp = [savePath,fName + "_trimmed_log.txt"]
+    txtPath = os.path.join(*pathTemp)
+
+    cap = cv2.VideoCapture(videofile_path)
+    totalFrameNum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    while(True):
+
+        ret, frame = cap.read()
+        frameNum += 1
         if ret == False:
             break
             
@@ -92,8 +109,9 @@ def videoAnalysis(videofile_path):
             saveImgPath = os.path.join(*pathTemp)
             cv2.imwrite(saveImgPath,frame)
             break
-        else:
-            cv2.imshow("Trimming",frame)
+
+    cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum)
+    display(cmdText)     
 
     cv2.waitKey(1)    
     cv2.destroyAllWindows()
@@ -114,4 +132,6 @@ videoPath = list(files)
 
 # Analysis
 for i in range(len(files)):
+    if i ==1:
+        checkLEDPos(videoPath[i])
     videoAnalysis(videoPath[i])
