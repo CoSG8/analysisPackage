@@ -82,7 +82,6 @@ def CheckLEDPos(videofile_path):
 def videoAnalysis(videofile_path):
 
     frameNum = 0
-    interval = 0
     fName = os.path.basename(os.path.splitext(videofile_path)[0])
     fNameExt = os.path.basename(os.path.splitext(videofile_path)[1])
 
