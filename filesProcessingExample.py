@@ -47,8 +47,9 @@ def checkLEDPos(videofile_path):
     cv2.resizeWindow("Trimming", w, h)
     cv2.imshow("Trimming",frame_1st)
     cv2.setMouseCallback("Trimming",get_position)
-    cv2.createTrackbar("Gamma","Trimming",gamma,300,onTrackbar)
-    cv2.createTrackbar("Color","Trimming",searchColor,2,onTrackbar2)
+    cv2.createTrackbar("LED th","Trimming",ledTh,255,onTrackbar1)
+    cv2.createTrackbar("Gamma","Trimming",gamma,300,onTrackbar2)
+    cv2.createTrackbar("Color","Trimming",searchColor,2,onTrackbar3)
 
     while(True):
 
@@ -84,7 +85,12 @@ def get_position(event,x,y,flags,param):
 
 
 # Define trackbar
-def onTrackbar(position):
+def onTrackbar1(position):
+    global ledTh
+    ledTh = position
+    display("LED Th: " +  str(ledTh))
+
+def onTrackbar2(position):
     global gamma
     gamma = position/100
     frame_1st_disp = gammaConv(gamma,frame_1st.copy())
@@ -92,7 +98,7 @@ def onTrackbar(position):
     display("Gamma : " +  str(gamma))
 
 
-def onTrackbar2(position):
+def onTrackbar3(position):
     global searchColor
     searchColor = int(position)
     display("Color: " + str(searchColor)) 
