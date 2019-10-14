@@ -1,6 +1,6 @@
 # filesProcessingExample
 # Progarmmed by Akito Kosugi 
-# ver.1.0    2019.10.12 <br>
+# ver.1.0    2019.10.12 
 
 # Import
 import cv2
@@ -18,14 +18,14 @@ trialNum = 0
 addFrame = 0
 gamma = 1
 searchColor = 1
-ledTh = 100
+ledTh = 150
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
 
 # Define functions
-def checkLEDPos(videofile_path):
+def checkLEDPos(capture,fileName):
     frameNum = 0
     interval = 0
     ESC_KEY = 0x1b # Esc キー
@@ -33,13 +33,7 @@ def checkLEDPos(videofile_path):
     R_KEY = 0x52 # r キー
     global frame_1st
 
-    fName = os.path.basename(os.path.splitext(videofile_path)[0])
-    fNameExt = os.path.basename(os.path.splitext(videofile_path)[1])
-
-    cap = cv2.VideoCapture(videofile_path)
-    totalFrameNum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    ret, frame_1st = cap.read()
+    ret, frame_1st = capture.read()
     frameNum += 1
     h, w, ch = frame_1st.shape
  
@@ -60,15 +54,20 @@ def checkLEDPos(videofile_path):
             interval = 0 
         elif key == S_KEY:
             interval = 30
-
+        if key == S_KEY:
+            interval = 30
+        
+        # Frame capture
         ret, frame = cap.read()
         frameNum += 1
         if frameNum > 1:
-            break
-            cv2.waitKey(1)    
-            cv2.destroyAllWindows()
-            cv2.waitKey(1)
+            break    
 
+    cv2.waitKey(1)    
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
+    capture.release()
+ 
 
 # Define mouse event
 def get_position(event,x,y,flags,param):
@@ -113,7 +112,8 @@ def gammaConv(gammaVal,img):
     return img_gamma
 
 
-def videoAnalysis(videofile_path):
+def videoAnalysis(capture,fileName,savefile_path):
+    global startFrame
     startFrame = []
     frameNum = 0
     sumVal = 0
@@ -121,21 +121,14 @@ def videoAnalysis(videofile_path):
     bRecording = False
     bLED = False
 
-    fName = os.path.basename(os.path.splitext(videofile_path)[0])
-    fNameExt = os.path.basename(os.path.splitext(videofile_path)[1])
-
-    pathTemp = [os.path.dirname(os.path.splitext(videofile_path)[0]),fName + '_trimmed']
-    savePath = os.path.join(*pathTemp)
-    os.makedirs(savePath, exist_ok=True)
-    pathTemp = [savePath,fName + "_trimmed_log.txt"]
+    pathTemp = [savefile_path,fName + "_trimmed_log.txt"]
     txtPath = os.path.join(*pathTemp)
 
-    cap = cv2.VideoCapture(videofile_path)
-    totalFrameNum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    totalFrameNum = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
     while(True):
 
-        ret, frame = cap.read()
+        ret, frame = capture.read()
         frameNum += 1
         if ret == False:
             break
@@ -152,17 +145,52 @@ def videoAnalysis(videofile_path):
         if bLED:
             bRecording = True
             startFrame.append(frameNum)
-            pathTemp = [savePath,fName + "_frame_" + str(frameNum) + ".jpg"]
-            saveImgPath = os.path.join(*pathTemp)
-            cv2.imwrite(saveImgPath,frame_gamma)
 
-        cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ", " + str(sumVal)
-        display(cmdText)     
+        # Display
+        cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ", LED value: " + str(sumVal)
+        display(cmdText)    
+
+        preSumVal = sumVal
 
     cmdText = 'Start frame: ' + str(startFrame)
     display(cmdText)
-    display(saveImgPath)
+    capture.release()
+    return startFrame
 
+
+def videoTrimming(capture,fileName,savefile_path,startframe):
+    frameNum = 0
+    trialNum = 0
+    bRecording = False
+
+    totalFrameNum = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    while(True):
+
+        ret, frame = capture.read()
+        frameNum += 1
+        if ret == False:
+            break
+        
+        frame_gamma = gammaConv(gamma,frame)
+
+        # Trimming  
+        if frameNum > startframe[trialNum]-1: 
+            trialNum += 1
+            bRecording = True
+
+        # Save
+        if bRecording:
+            pathTemp = [savefile_path,fName + "_trial_" + str(trialNum) + ".jpg"]
+            saveImgPath = os.path.join(*pathTemp)
+            cv2.imwrite(saveImgPath,frame_gamma)
+
+        # Display
+        if bRecording:
+            cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ",  Trial: " + str(trialNum) + " Rec"
+        else:
+            cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ",  Trial: " + str(trialNum)
+        display(cmdText)    
 
 
 # Open files
@@ -176,6 +204,21 @@ videoPath = list(files)
 
 # Analysis
 for i in range(len(files)):
+
+    fName = os.path.basename(os.path.splitext(videoPath[i])[0])
+    fNameExt = os.path.basename(os.path.splitext(videoPath[i])[1])
+    pathTemp = [os.path.dirname(os.path.splitext(videoPath[i])[0]),fName + '_trimmed']
+    savePath = os.path.join(*pathTemp)
+    os.makedirs(savePath, exist_ok=True)
+    display(savePath)
+    
+    cap = cv2.VideoCapture(videoPath[i])
     if i == 0:
-        checkLEDPos(videoPath[i])
-    videoAnalysis(videoPath[i])
+        cap = cv2.VideoCapture(videoPath[i])
+        checkLEDPos(cap,fName)
+
+    cap = cv2.VideoCapture(videoPath[i])
+    startFrame = videoAnalysis(cap,fName,savePath)
+    if len(startFrame) > 0:
+        cap = cv2.VideoCapture(videoPath[i])
+        videoTrimming(cap,fName,savePath,startFrame)
