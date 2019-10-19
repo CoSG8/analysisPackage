@@ -63,9 +63,6 @@ def checkLEDPos(capture,fileName):
         if frameNum > 1:
             break    
 
-    cv2.waitKey(1)    
-    cv2.destroyAllWindows()
-    cv2.waitKey(1)
     capture.release()
  
 
@@ -114,12 +111,17 @@ def gammaConv(gammaVal,img):
 
 def videoAnalysis(capture,fileName,savefile_path):
     global startFrame
-    startFrame = []
+    startframe = []
+    endframe = []
+    duration = []
     frameNum = 0
+    trialNum = 0
     sumVal = 0
     preSumVal = 0
-    bRecording = False
+    addFrame = 0
     bLED = False
+    bLED_on = False
+    bLED_off = False
 
     pathTemp = [savefile_path,fName + "_trimmed_log.txt"]
     txtPath = os.path.join(*pathTemp)
@@ -128,69 +130,109 @@ def videoAnalysis(capture,fileName,savefile_path):
 
     while(True):
 
+        # Video capture
         ret, frame = capture.read()
-        frameNum += 1
         if ret == False:
+            if bLED:
+                endframe.append(frameNum)
+                duration.append(addFrame)
             break
-        
+        frameNum += 1        
         frame_gamma = gammaConv(gamma,frame)
 
         # LED Detection
         roiFrame = frame_gamma[roiY:roiY+roiH,roiX:roiX+roiW]
         sumVal = roiFrame.T[searchColor].flatten().mean()   
-        if sumVal > ledTh: 
-            if preSumVal < ledTh:
-                bLED = True
+        if sumVal > ledTh:
+            if bLED == False:
+                bLED_on = True
+            bLED = True
+        else:
+            if bLED:
+                bLED_off = True
+            bLED = False
+
+        if bLED_on:
+            trialNum += 1
+            startframe.append(frameNum)
+            bLED_on = False
+
+        if bLED_off:
+            endframe.append(frameNum)
+            duration.append(addFrame)
+            addFrame = 0
+            bLED_off = False
 
         if bLED:
-            bRecording = True
-            startFrame.append(frameNum)
-
+            addFrame = frameNum - startframe[trialNum-1] + 1
+            dispText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + " Trial: " + str(trialNum) + " LED value: " + str(sumVal) + ' LED frame: ' + str(addFrame)
+        else:
+            dispText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + " Trial: " + str(trialNum) +  " LED value: " + str(sumVal)
+    
         # Display
-        cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ", LED value: " + str(sumVal)
-        display(cmdText)    
+        display(dispText)    
 
         preSumVal = sumVal
 
-    cmdText = 'Start frame: ' + str(startFrame)
-    display(cmdText)
+    dispText = 'Start frame: ' + str(startframe)
+    display(dispText)
+    dispText = 'End frame: ' + str(endframe)
+    display(dispText)
     capture.release()
-    return startFrame
+    return startframe, endframe, duration, trialNum
 
 
-def videoTrimming(capture,fileName,savefile_path,startframe):
+def videoTrimming(capture,fileName,savefile_path,startframe,endframe):
     frameNum = 0
     trialNum = 0
+    recFrame = 0
+    recFrame_pre = 10
+    recFrame_post = 0
+    bRecStart = False
     bRecording = False
 
     totalFrameNum = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
     while(True):
 
+        # Video capture
         ret, frame = capture.read()
-        frameNum += 1
         if ret == False:
             break
-        
+        frameNum += 1
+        h, w, ch = frame.shape
         frame_gamma = gammaConv(gamma,frame)
 
         # Trimming  
-        if frameNum > startframe[trialNum]-1: 
-            trialNum += 1
-            bRecording = True
+        if frameNum > startframe[trialNum]-1 - recFrame_pre:
+            if bRecording == False: 
+                bRecStart = True
+                bRecording = True
+        if frameNum > endframe[trialNum] - recFrame_post: 
+            if bRecording:
+                trialNum += 1
+                bRecording = False
 
-        # Save
+        # Recording
+        if bRecStart:
+            pathTemp = [savefile_path,fName + "_trial_" + str(trialNum+1) + ".avi"]
+            videoSavePath = os.path.join(*pathTemp)
+            dst = cv2.VideoWriter(videoSavePath, fourcc, 30.0, (w,h)) 
+            bRecStart = False
         if bRecording:
-            pathTemp = [savefile_path,fName + "_trial_" + str(trialNum) + ".jpg"]
-            saveImgPath = os.path.join(*pathTemp)
-            cv2.imwrite(saveImgPath,frame_gamma)
-
-        # Display
-        if bRecording:
-            cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ",  Trial: " + str(trialNum) + " Rec"
+            recFrame += 1
+            dst.write(frame_gamma) 
+            dispText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ",  Trial: " + str(trialNum+1) + " Rec"
         else:
-            cmdText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ",  Trial: " + str(trialNum)
-        display(cmdText)    
+            dispText = "Frame: " + str(frameNum) + " / " + str(totalFrameNum) + ",  Trial: " + str(trialNum)
+        
+        # Display
+        display(dispText)    
+
+    pathTemp = [savePath, 'temp.avi']
+    saveName = os.path.join(*pathTemp)
+    dst = cv2.VideoWriter(saveName, fourcc, 30.0, (h,w)) 
+
 
 
 # Open files
@@ -198,7 +240,9 @@ root = tkinter.Tk()
 root.withdraw()
 fTyp = [("","*")]
 iDir = os.path.abspath(os.path.dirname('__file__'))
+# for Win
 # files = tkinter.filedialog.askopenfilenames(filetypes = fTyp,initialdir = iDir)
+# for Mac
 files = tkinter.filedialog.askopenfilenames(initialdir = iDir)
 videoPath = list(files)
 
@@ -216,9 +260,13 @@ for i in range(len(files)):
     if i == 0:
         cap = cv2.VideoCapture(videoPath[i])
         checkLEDPos(cap,fName)
+    
+    cv2.waitKey(1)    
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
 
     cap = cv2.VideoCapture(videoPath[i])
-    startFrame = videoAnalysis(cap,fName,savePath)
-    if len(startFrame) > 0:
+    startFrame, endFrame, duration, trialNum = videoAnalysis(cap,fName,savePath)
+    if trialNum > 0:
         cap = cv2.VideoCapture(videoPath[i])
-        videoTrimming(cap,fName,savePath,startFrame)
+        videoTrimming(cap,fName,savePath,startFrame,endFrame)
