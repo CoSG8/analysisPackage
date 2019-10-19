@@ -12,20 +12,18 @@ import numpy as np
 from IPython.core.display import display
 
 # Initialization
-recFrameNum = 0
-trialNum = 0
-
-addFrame = 0
-gamma = 1
-searchColor = 1
 ledTh = 150
+recFrame_pre = 10
+recFrame_post = 0
+searchColor = 1
+gamma = 1
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
 
 # Define functions
-def checkLEDPos(capture,fileName):
+def checkLEDPos(capture,filename,savefile_path):
     frameNum = 0
     interval = 0
     ESC_KEY = 0x1b # Esc キー
@@ -36,14 +34,17 @@ def checkLEDPos(capture,fileName):
     ret, frame_1st = capture.read()
     frameNum += 1
     h, w, ch = frame_1st.shape
- 
+    
+    # window setting
     cv2.namedWindow("Trimming", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Trimming", w, h)
     cv2.imshow("Trimming",frame_1st)
     cv2.setMouseCallback("Trimming",get_position)
     cv2.createTrackbar("LED th","Trimming",ledTh,255,onTrackbar1)
-    cv2.createTrackbar("Gamma","Trimming",gamma,300,onTrackbar2)
-    cv2.createTrackbar("Color","Trimming",searchColor,2,onTrackbar3)
+    cv2.createTrackbar("Pre","Trimming",recFrame_pre,240,onTrackbar2)
+    cv2.createTrackbar("Post","Trimming",recFrame_post,240,onTrackbar3)
+    cv2.createTrackbar("Color","Trimming",searchColor,2,onTrackbar4)
+    cv2.createTrackbar("Gamma","Trimming",gamma,300,onTrackbar5)
 
     while(True):
 
@@ -63,8 +64,13 @@ def checkLEDPos(capture,fileName):
         if frameNum > 1:
             break    
 
-    capture.release()
- 
+    # write txt file
+    pathTemp = [savefile_path,filename + "_trimmed_log.txt"]
+    txtPath = os.path.join(*pathTemp)
+    f = open(txtPath ,'a')
+    config = filename +  "\n" + "LED th: " + str(ledTh) + ", Pre frame: " + str(recFrame_pre) + ", Post frame: " + str(recFrame_post) + ", LED color: " + str(searchColor) + ", gamma: " + str(gamma) + "\n"
+    f.write(config)
+    f.close()
 
 # Define mouse event
 def get_position(event,x,y,flags,param):
@@ -79,7 +85,6 @@ def get_position(event,x,y,flags,param):
         cv2.rectangle(frame_1st_disp,(roiX,roiY),(roiX+roiW,roiY+roiH),(255,241,15),3)
         cv2.imshow("Trimming",frame_1st_disp)
 
-
 # Define trackbar
 def onTrackbar1(position):
     global ledTh
@@ -87,18 +92,26 @@ def onTrackbar1(position):
     display("LED Th: " +  str(ledTh))
 
 def onTrackbar2(position):
+    global recFrame_pre
+    recFrame_pre = int(position)
+    display("Rec frame pre: " + str(recFrame_pre)) 
+
+def onTrackbar3(position):
+    global recFrame_post
+    recFrame_post = int(position)
+    display("Rec frame post: " + str(recFrame_post)) 
+
+def onTrackbar4(position):
+    global searchColor
+    searchColor = int(position)
+    display("Color: " + str(searchColor)) 
+
+def onTrackbar5(position):
     global gamma
     gamma = position/100
     frame_1st_disp = gammaConv(gamma,frame_1st.copy())
     cv2.imshow("Trimming",frame_1st_disp)
     display("Gamma : " +  str(gamma))
-
-
-def onTrackbar3(position):
-    global searchColor
-    searchColor = int(position)
-    display("Color: " + str(searchColor)) 
-
 
 # Define Gamma conversion
 def gammaConv(gammaVal,img):
@@ -109,22 +122,17 @@ def gammaConv(gammaVal,img):
     return img_gamma
 
 
-def videoAnalysis(capture,fileName,savefile_path):
-    global startFrame
+def videoAnalysis(capture,filename,savefile_path):
     startframe = []
     endframe = []
     duration = []
     frameNum = 0
     trialNum = 0
     sumVal = 0
-    preSumVal = 0
     addFrame = 0
     bLED = False
     bLED_on = False
     bLED_off = False
-
-    pathTemp = [savefile_path,fName + "_trimmed_log.txt"]
-    txtPath = os.path.join(*pathTemp)
 
     totalFrameNum = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -172,12 +180,19 @@ def videoAnalysis(capture,fileName,savefile_path):
         # Display
         display(dispText)    
 
-        preSumVal = sumVal
+    # write txt file
+    pathTemp = [savefile_path,filename + "_trimmed_log.txt"]
+    txtPath = os.path.join(*pathTemp)
+    for i in range(trialNum):
+        f = open(txtPath ,'a')
+        result = "Trial: " + str(i) + ", Start frame: " + str(startframe[i]) + ", End frame: " + str(endframe[i]) + ", Duration: " + str(duration[i]) +"\n"
+        f.write(result)
+    f.close()
 
-    dispText = 'Start frame: ' + str(startframe)
+    # Display
+    dispText = "Number of Trials: " + str(trialNum) ', Start frame: ' + str(startframe)
     display(dispText)
-    dispText = 'End frame: ' + str(endframe)
-    display(dispText)
+    
     capture.release()
     return startframe, endframe, duration, trialNum
 
@@ -186,8 +201,6 @@ def videoTrimming(capture,fileName,savefile_path,startframe,endframe):
     frameNum = 0
     trialNum = 0
     recFrame = 0
-    recFrame_pre = 10
-    recFrame_post = 0
     bRecStart = False
     bRecording = False
 
@@ -259,7 +272,7 @@ for i in range(len(files)):
     cap = cv2.VideoCapture(videoPath[i])
     if i == 0:
         cap = cv2.VideoCapture(videoPath[i])
-        checkLEDPos(cap,fName)
+        checkLEDPos(cap,fName,savePath)
     
     cv2.waitKey(1)    
     cv2.destroyAllWindows()
