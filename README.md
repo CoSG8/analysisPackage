@@ -11,11 +11,11 @@ opencvを用いて動画を切り出すプログラムです。 <br>
 1. 切り出す元の動画を読み込む  <br>
 2. GUIのスライダーを操作してパラメータを調整する  <br>
 
-GUI<br>
+<GUI> <br>
 
-![sample_GUI](https://user-images.githubusercontent.com/13012265/68525064-ff8cd080-0310-11ea-838c-15e8aac87c56.png)
+![sample_GUI](https://user-images.githubusercontent.com/13012265/68525142-db7dbf00-0311-11ea-9ac6-15635007382a.png)
 
-パラメータ一覧 <br>
+<パラメータ一覧> <br>
 
  - Color　　参照するLEDの色（0:青、1:緑、2:赤）
  - Pre　　　LED点灯前何フレーム前から動画を切り出すか
