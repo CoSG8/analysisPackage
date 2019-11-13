@@ -1,12 +1,13 @@
 # cornerDetection_Calib
 # Akito Kosugi 
-# ver.1.1    2019.11.12
+# ver.1.2    2019.11.13
 
 # Import
 import numpy as np
 from pathlib import Path
 import cv2
 import os
+import sys
 import glob
 import re
 import tkinter
@@ -14,9 +15,13 @@ import tkinter.filedialog
 from IPython.core.display import display
 
 # Initialization
-cbrow = 8
-cbcol = 6
-cam_names = ['camera-1', 'camera-2', 'camera-3']
+argv = sys.argv
+cbrow = int(argv[1])
+cbcol = int(argv[2])
+num_cameras = int(argv[3])
+cam_names = []
+for cam in range(num_cameras):
+    cam_names.append("camera-" + str(cam+1))
 
 # Termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
