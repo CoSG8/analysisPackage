@@ -1,6 +1,6 @@
 # frameRejection_Calib.py
 # Akito Kosugi 
-# ver.1.0    2020.04.07
+# ver.1.0.1    2020.04.18
 
 # Import
 import cv2
@@ -25,6 +25,8 @@ fTyp = [("","*")]
 iDir = os.path.abspath(os.path.dirname('__file__'))
 img_path = tkinter.filedialog.askdirectory(initialdir = iDir)
 
+display(img_path)
+
 images = glob.glob(os.path.join(img_path,'*.jpg'))
 
 root = tkinter.Tk()
@@ -36,11 +38,9 @@ csvName = os.path.basename(os.path.splitext(csvPath)[0])
 
 display(csvPath)
 
-csv_input = pd.read_csv(csvPath)
-row,col = csv_input.shape
-display(str(csv_input.values))
-display(str(row))
-display(str(col))
+csv_input = pd.read_csv(csvPath, header=None)
+csv_input_values =list(csv_input.values)
+display(str(csv_input_values))
 
 pathTemp = [os.path.dirname(os.path.splitext(csvPath)[0]),'calibration_images']
 saveFolder = os.path.join(*pathTemp)
@@ -59,13 +59,11 @@ for fname in images:
 	regex = re.compile(r'-')
 	splitTxt = regex.split(filename)
 	regex = re.compile(r'_')
-	imgIdx.append(regex.split(splitTxt[1]))
+	imgIdx.append(regex.split(splitTxt[2]))
 	j += 1
-	display(imgIdx[j])	
+	# display('imgIdx: ' + str(imgIdx[j]))
 
-	if imgIdx[j] == csv_input.values[0,i]:
-		display(csv_input.values[0,i])		
-	else:
-		i += 1
+	if len(set(imgIdx[j]) & set(csv_input_values)) > 0:
+		display('imgIdx: ' + str(imgIdx[j]))
 		img = cv2.imread(fname)
 		cv2.imwrite(os.path.join(str(saveFolder),filename+'.jpg'),img)
