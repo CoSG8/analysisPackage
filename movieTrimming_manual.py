@@ -1,7 +1,7 @@
 # coding: UTF-8
 # movieTrimming_manual.py
 # Akito Kosugi 
-# ver.1.0   2020.05.01
+# ver.1.0.1   2020.05.01
 
 # Import
 import cv2
@@ -98,7 +98,7 @@ def checkFirstFrame(filename,videofile_path):
         key = cv2.waitKey(interval)
         if key == ESC_KEY:
             break 
-        elif key == s_KEY:
+        elif key == enter_key:
             interval = 30 
         
         # Frame capture
