@@ -1,7 +1,7 @@
 # coding: UTF-8
 # movieTrimming_manual.py
 # Akito Kosugi 
-# ver.1.0.1   2020.05.01
+# ver.1.0.2   2020.05.01
 
 # Import
 import cv2
@@ -19,6 +19,7 @@ space_key = 32   # Space
 enter_key = 13   # Enter
 s_KEY = ord('s')
 r_KEY = ord('r')
+a_KEY = ord('a')
 
 rotAngle = 0
 gamma = 1
@@ -54,7 +55,7 @@ def create_logFile(filename,savefile_path):
     return logPath
 
 def frameDisp(frame,numFrame,totalNumFrame,bRecording):
-    msg = "s key: play or stop, r key: record or record stop"
+    msg = "s key: play or stop, r key: trim start or stop"
     cv2.putText(frame, msg, (10, 20), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
     msg = "enter key: previous frame, space key: previous frame"
     cv2.putText(frame, msg, (10, 40), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
@@ -119,6 +120,7 @@ def movieAnnotation(fileName,videofile_path):
     endframe = []
     bRecording = False
     bPlaying = False
+    bPlaying_fast = False
 
     cap = cv2.VideoCapture(videofile_path)
     totalNumFrame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -141,22 +143,34 @@ def movieAnnotation(fileName,videofile_path):
         frameDisp(frame_gamma,numFrame,totalNumFrame,bRecording)
 
         if(bPlaying):
-            interval = 30
+            if(bPlaying_fast):
+                interval = 3
+            else:
+                interval = 30
         else:
+            if(bPlaying_fast):
+                bPlaying_fast = False
+                display("Fast-forward stop")
             interval = 0
         key = cv2.waitKey(interval)
         if key == ESC_KEY:
             break 
         elif key == s_KEY:
             bPlaying = not(bPlaying)
+        elif key == a_KEY:
+            bPlaying_fast = not(bPlaying_fast)
+            if(bPlaying_fast):
+                display("Fast-forward start")
+            else:
+                display("Fast-forward stop")
         elif key == r_KEY:
             bRecording = not(bRecording)
             if(bRecording):
                 startframe.append(numFrame)
-                display("Trim start: " + str(int(numFrame)) + " frame")
+                display("Trim " + str(len(startframe)) + " start: " + str(int(numFrame)) + " frame")
             else:
                 endframe.append(numFrame)
-                display("Trim stop: " + str(int(numFrame)) + " frame")
+                display("Trim " + str(len(startframe)) + " stop: " + str(int(numFrame)) + " frame")
             setFrame = numFrame-2
             cap.set(cv2.CAP_PROP_POS_FRAMES,setFrame)
             ret, frame = cap.read()
