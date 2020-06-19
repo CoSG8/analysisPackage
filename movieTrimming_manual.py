@@ -1,7 +1,7 @@
 # coding: UTF-8
 # movieTrimming_manual.py
 # Akito Kosugi 
-# ver.1.0.2   2020.05.01
+# ver.1.0.3   2020.06.17
 
 # Import
 import cv2
@@ -65,16 +65,16 @@ def frameDisp(frame,numFrame,totalNumFrame,bRecording):
         cv2.circle(frame,(15,65),10,(0,0,255),thickness=-1)
     cv2.imshow("img",frame)
 
-def framePreProcessing(frame,rotangle):
+def framePreProcessing(frame,rot_angle):
     # Rotation
-    if rotAngle == 270:
+    if rot_angle == 270:
         frame_rot = cv2.rotate(frame,cv2.ROTATE_90_COUNTERCLOCKWISE)
-    elif rotAngle == 90:
+    elif rot_angle == 90:
         frame_rot= cv2.rotate(frame,cv2.ROTATE_90_CLOCKWISE)
     else:
         frame_rot = frame.copy()
     # Gamma conv
-    frame_gamma = gammaConv(frame)
+    frame_gamma = gammaConv(frame_rot)
     return frame_gamma
 
 def checkFirstFrame(filename,videofile_path):
@@ -127,11 +127,11 @@ def movieAnnotation(fileName,videofile_path):
 
     ret, frame_1st = cap.read()
     numFrame = cap.get(cv2.CAP_PROP_POS_FRAMES)
-    h, w, ch = frame_1st.shape
     frame_1st_gamma = framePreProcessing(frame_1st,rotAngle)
-    
+
+    h, w, ch = frame_1st_gamma.shape
     cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("img", w, h)
+    cv2.resizeWindow("img", w,h)
     frameDisp(frame_1st_gamma,numFrame,totalNumFrame,bRecording)
 
     while True:
