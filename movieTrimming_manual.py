@@ -1,7 +1,7 @@
 # coding: UTF-8
 # movieTrimming_manual.py
 # Akito Kosugi 
-# ver.1.0.3   2020.06.17
+# ver.1.0.4   2020.07.07
 
 # Import
 import cv2
@@ -29,14 +29,22 @@ fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
 # Define function
 # Gamma conversion
-def onTrackbar(position):
+def onTrackbar1(position):
     global gamma
     gamma = position/100
     frame_1st_disp = gammaConv(frame_1st.copy())
     cv2.imshow("Trimming",frame_1st_disp)
     cv2.putText(frame_1st,fName,(10,20),font,0.5,(0,0,255),2,cv2.LINE_AA)
     display("Gamma : " +  str(gamma))
-    
+
+def onTrackbar2(position):
+    global rotAngle
+    rotAngle = position
+    frame_1st_disp = gammaConv(frame_1st.copy())
+    cv2.imshow("Trimming",frame_1st_disp)
+    cv2.putText(frame_1st,fName,(10,20),font,0.5,(0,0,255),2,cv2.LINE_AA)
+    display("Rotation : " +  str(rotAngle))
+
 def gammaConv(img):
     gamma_cvt = np.zeros((256,1), dtype=np.uint8)
     for i in range(256):
@@ -92,7 +100,8 @@ def checkFirstFrame(filename,videofile_path):
     cv2.resizeWindow("Trimming", h, w)
     cv2.putText(frame_1st_disp,filename,(10,20),font,0.5,(0,0,255),2,cv2.LINE_AA)
     cv2.imshow("Trimming",frame_1st_disp)
-    cv2.createTrackbar("Gamma","Trimming",gamma,300,onTrackbar)
+    cv2.createTrackbar("Gamma","Trimming",gamma,300,onTrackbar1)
+    cv2.createTrackbar("Rotation","Trimming",rotAngle,360,onTrackbar2)
 
     while(True):
 
@@ -128,7 +137,7 @@ def movieAnnotation(fileName,videofile_path):
     ret, frame_1st = cap.read()
     numFrame = cap.get(cv2.CAP_PROP_POS_FRAMES)
     frame_1st_gamma = framePreProcessing(frame_1st,rotAngle)
-
+    
     h, w, ch = frame_1st_gamma.shape
     cv2.namedWindow("img", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("img", w,h)
