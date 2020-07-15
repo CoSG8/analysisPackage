@@ -1,3 +1,4 @@
+# coding: UTF-8
 # cornerDetection_Calib
 # Akito Kosugi 
 # ver.1.2    2019.11.13
