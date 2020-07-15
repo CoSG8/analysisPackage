@@ -1,3 +1,4 @@
+# coding: UTF-8
 # frameRejection_Calib.py
 # Akito Kosugi 
 # ver.1.0.1    2020.04.18
