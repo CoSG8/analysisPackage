@@ -1,3 +1,4 @@
+# coding: UTF-8
 # movieTrimming_frame
 # Programmed by Akito Kosugi 
 # ver.1.0    2020.03.01
