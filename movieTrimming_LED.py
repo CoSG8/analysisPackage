@@ -257,7 +257,7 @@ def videoTrimming(fileName,videofile_path,savefile_path,startframe,endframe):
     pathTemp = [savePath, 'temp.avi']
     saveName = os.path.join(*pathTemp)
     dst = cv2.VideoWriter(saveName, fourcc, 30.0, (h,w))
-    os.remove(saveName)
+#     os.remove(saveName)
     cap.release()
 
 
