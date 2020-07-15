@@ -1,3 +1,4 @@
+# coding: UTF-8
 # gammaConv_image
 # Akito Kosugi
 # ver.1.1    2019.12.22
