@@ -1,7 +1,7 @@
 # coding: UTF-8
 # movieTrimming_LED.py
 # Akito Kosugi 
-# ver.1.1.2    2020.07.15
+# ver.1.1.3    2020.07.21
 
 # Import
 import cv2
@@ -20,6 +20,7 @@ searchColor = 2
 gamma = 1
 roiW = 30
 roiH = 30
+rotAngle = 90
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
@@ -36,13 +37,14 @@ def checkLEDPos(filename,videofile_path,savefile_path):
     cap = cv2.VideoCapture(videofile_path)
     frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) + 1
     ret, frame_1st = cap.read()
-    h, w, ch = frame_1st.shape
+    frame_1st_disp = framePreProcessing(frame_1st.copy(),rotAngle) 
+    h, w, ch = frame_1st_disp.shape
     
     # window setting
     cv2.namedWindow("Trimming", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Trimming", w, h)
-    cv2.putText(frame_1st,filename,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
-    cv2.imshow("Trimming",frame_1st)
+    cv2.putText(frame_1st_disp,filename,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
+    cv2.imshow("Trimming",frame_1st_disp)
     cv2.setMouseCallback("Trimming",get_position)
     cv2.createTrackbar("LED th","Trimming",ledTh,255,onTrackbar1)
     cv2.createTrackbar("Pre","Trimming",trimFrame_pre,360,onTrackbar2)
@@ -91,9 +93,10 @@ def get_position(event,x,y,flags,param):
         global roiX, roiY
         roiX = x - int(roiW/2)
         roiY = y - int(roiH/2)
-        frame_1st_disp  = gammaConv(gamma,frame_1st.copy())
+        # frame_1st_disp  = gammaConv(gamma,frame_1st.copy())
+        frame_1st_disp = framePreProcessing(frame_1st.copy(),rotAngle) 
         cv2.rectangle(frame_1st_disp,(roiX,roiY),(roiX+roiW,roiY+roiH),(255,241,15),3)
-        cv2.putText(frame_1st,fName,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
+        cv2.putText(frame_1st_disp,fName,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
         cv2.imshow("Trimming",frame_1st_disp)
         display((roiX,roiY))
 
@@ -121,8 +124,9 @@ def onTrackbar4(position):
 def onTrackbar5(position):
     global gamma
     gamma = position/100
-    frame_1st_disp = gammaConv(gamma,frame_1st.copy())
-    cv2.putText(frame_1st,fName,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
+    # frame_1st_disp = gammaConv(gamma,frame_1st.copy())
+    frame_1st_disp = framePreProcessing(frame_1st.copy(),rotAngle) 
+    cv2.putText(frame_1st_disp,fName,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
     cv2.imshow("Trimming",frame_1st_disp)
     display("Gamma : " +  str(gamma))
 
@@ -133,6 +137,18 @@ def gammaConv(gammaVal,img):
         gamma_cvt[i][0] = 255*(float(i)/255) ** (1.0 / gammaVal)
     img_gamma = cv2.LUT(img, gamma_cvt) 
     return img_gamma
+
+def framePreProcessing(frame,rot_angle):
+    # Rotation
+    if rot_angle == 270:
+        frame_rot = cv2.rotate(frame,cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif rot_angle == 90:
+        frame_rot= cv2.rotate(frame,cv2.ROTATE_90_CLOCKWISE)
+    else:
+        frame_rot = frame.copy()
+    # Gamma conv
+    frame_gamma = gammaConv(gamma,frame_rot)
+    return frame_gamma
 
 
 def videoAnalysis(filename,videofile_path,logfile_path,savefile_path):
@@ -159,7 +175,8 @@ def videoAnalysis(filename,videofile_path,logfile_path,savefile_path):
                 endframe.append(frameNum)
                 duration.append(addFrame)
             break
-        frame_gamma = gammaConv(gamma,frame)
+        frame_gamma = framePreProcessing(frame,rotAngle) 
+        # frame_gamma = gammaConv(gamma,frame)
 
         # LED Detection
         roiFrame = frame_gamma[roiY:roiY+roiH,roiX:roiX+roiW]
@@ -223,8 +240,9 @@ def videoTrimming(fileName,videofile_path,savefile_path,startframe,endframe):
     trimEndFrame = list(trimEndFrame_np)
 
     cap = cv2.VideoCapture(videofile_path)
-    ret, frame = cap.read()
-    h, w, ch = frame.shape
+    ret, frame = cap.read() 
+    frame_gamma = framePreProcessing(frame,rotAngle) 
+    h, w, ch = frame_gamma.shape
 
     # Trimming
     for i in range(len(trimStartFrame)):
@@ -243,7 +261,8 @@ def videoTrimming(fileName,videofile_path,savefile_path,startframe,endframe):
             frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) + 1
             ret,frame = cap.read()
             if frameNum < trimEndFrame[i]:
-                frame_gamma = gammaConv(gamma,frame)
+                # frame_gamma = gammaConv(gamma,frame)
+                frame_gamma = framePreProcessing(frame,rotAngle) 
                 trimFrameNum += 1
                 text = fileName + " Start: " + str(trimStartFrame[i]) + " Frame: " + str(trimFrameNum) 
                 cv2.putText(frame_gamma,text,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
