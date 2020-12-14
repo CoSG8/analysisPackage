@@ -2,7 +2,7 @@
 coding: UTF-8
 movieTrimming_LED.py
 # by Akito Kosugi 
-# ver. 2.0.1   2020.11.03
+# ver. 2.0.2   2020.12.11
 
 """
 
@@ -70,10 +70,14 @@ def main():
         f.close()
 
         if num_LED == 2:
-            trigFrame, trigEndFrame, frameBack = movieAnalysis.LEDdetection_1st(fName,videoPath[i],logPath,savePath,rotAngle,gamma,roiX1,roiY1,roiW,roiH,ledTh1,searchColor1)
+            if i == 0:
+                trigFrame, trigEndFrame, frameBack = movieAnalysis.LEDdetection_1st(fName,videoPath[i],logPath,savePath,rotAngle,gamma,roiX1,roiY1,roiW,roiH,ledTh1,searchColor1)
+            else:
+                trigFrame = 0
+                trigEndFrame = 0
         else:
-            trigFrame = 1
-            trigEndFrame = 1
+            trigFrame = 0
+            trigEndFrame = 0
 
         startFrame, endFrame,trialNum = movieAnalysis.LEDdetection(fName,videoPath[i],savePath,trigFrame,trigEndFrame,rotAngle,gamma,roiX2,roiY2,roiW,roiH,ledTh2,searchColor2,trimFrame_pre,trimFrame_post)
         if trialNum > 0:

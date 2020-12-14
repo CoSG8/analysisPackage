@@ -2,7 +2,7 @@
 coding: UTF-8
 movie trimming utils
 # by Akito Kosugi 
-# ver. 1.2.1   2020.11.09
+# ver. 1.2.6   2020.12.12
 
 """
 
@@ -97,6 +97,7 @@ def LEDdetection(filename,videofile_path,savefile_path,trigframe,trigEnd_frame,r
     endframe = []
     duration = []
     trialNum = 0
+    frameNum = 0
     sumVal = 0
     addFrame = 0
     bLED = False
@@ -105,18 +106,21 @@ def LEDdetection(filename,videofile_path,savefile_path,trigframe,trigEnd_frame,r
 
     cap = cv2.VideoCapture(videofile_path)
     totalFrameNum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.set(cv2.CAP_PROP_POS_FRAMES,trigEnd_frame-1)
+    if trigEnd_frame>0:
+        cap.set(cv2.CAP_PROP_POS_FRAMES,trigEnd_frame-1)
+    frameNum = trigEnd_frame-trigframe
 
     while(True):
 
         # Video capture
-        frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) + 1
         ret, frame = cap.read()
         if ret == False:
             if bLED:
                 endframe.append(frameNum)
                 duration.append(addFrame)
             break
+        else:
+            frameNum += 1
         frame_process = preProcessing(frame,rotAngle,gamma) 
 
         # LED Detection
@@ -200,14 +204,15 @@ def differential(filename,videofile_path,savefile_path,trigframe,frameback,rotAn
 
     cap = cv2.VideoCapture(videofile_path)
     totalFramenum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.set(cv2.CAP_PROP_POS_FRAMES,trigframe-1)
+    cap.set(cv2.CAP_PROP_POS_FRAMES,trigframe)
 
     while(True):
         # Frame capture
-        framenum += 1
         ret,frame = cap.read()
         if ret == False:
             break
+        else:
+            framenum += 1
 
         # Masking 
         frame_mask = preProcessing(frame,rotAngle,gamma)
@@ -293,22 +298,24 @@ def differential(filename,videofile_path,savefile_path,trigframe,frameback,rotAn
     return startframe, trialnum
 
 
-def frameDisp(frame,numFrame,totalNumFrame,bRecording):
+def frameDisp(frame,filename,numFrame,totalNumFrame,bRecording):
+
+    cv2.putText(frame,filename,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
     msg = "s key: play or stop, r key: trim start or stop"
-    cv2.putText(frame, msg, (10, 20), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
-    msg = "enter key: previous frame, space key: previous frame"
-    cv2.putText(frame, msg, (10, 40), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
+    cv2.putText(frame, msg, (10, 60), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
+    msg = "enter key: next frame, space key: previous frame"
+    cv2.putText(frame, msg, (10, 80), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
     msg = "Frame: " + str(int(numFrame)) + " / " + str(int(totalNumFrame))
-    cv2.putText(frame, msg, (30, 70), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
+    cv2.putText(frame, msg, (30, 110), font, 0.5, (0,0,255), 2, cv2.LINE_AA)
     if(bRecording):
-        cv2.circle(frame,(15,65),10,(0,0,255),thickness=-1)
+        cv2.circle(frame,(15,105),10,(0,0,255),thickness=-1)
     cv2.imshow("img",frame)
     
 def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,gamma):
     
     ESC_KEY = 27 # Esc キー
-    space_key = 32   # Space
-    enter_key = 13   # Enter
+    space_KEY = 32   # Space
+    enter_KEY = 13   # Enter
     s_KEY = ord('s')
     r_KEY = ord('r')
     a_KEY = ord('a')
@@ -322,7 +329,7 @@ def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,ga
 
     cap = cv2.VideoCapture(videofile_path)
     totalNumFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.set(cv2.CAP_PROP_POS_FRAMES,trigframe-1)
+    cap.set(cv2.CAP_PROP_POS_FRAMES,trigframe)
 
     ret,frame = cap.read() 
     frame_process = preProcessing(frame,rotAngle,gamma) 
@@ -331,7 +338,7 @@ def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,ga
     h,w,ch = frame_process.shape
     cv2.namedWindow("img",cv2.WINDOW_NORMAL)
     cv2.resizeWindow("img",w,h)
-    frameDisp(frame_process,numFrame,totalNumFrame,bRecording)
+    frameDisp(frame_process,filename,numFrame,totalNumFrame,bRecording)
 
     while(True):
         # Video capture
@@ -341,7 +348,7 @@ def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,ga
 
         framenum = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) + 1
         frame_process = preProcessing(frame,rotAngle,gamma) 
-        frameDisp(frame_process,framenum,totalNumFrame,bRecording)
+        frameDisp(frame_process,filename,framenum,totalNumFrame,bRecording)
 
         if(bPlaying):
             if(bPlaying_fast):
@@ -357,7 +364,7 @@ def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,ga
         key = cv2.waitKey(interval)
         if key == ESC_KEY:
             break 
-        elif key == enter_key:
+        elif key == s_KEY:
             bPlaying = not(bPlaying)
         elif key == a_KEY:
             bPlaying_fast = not(bPlaying_fast)
@@ -379,14 +386,14 @@ def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,ga
             ret, frame = cap.read()
             numFrame = cap.get(cv2.CAP_PROP_POS_FRAMES)
             frame_process = preProcessing(frame,rotAngle,gamma) 
-            frameDisp(frame_process,numFrame,totalNumFrame,bRecording)
-        elif key == space_key:
+            frameDisp(frame_process,filename,numFrame,totalNumFrame,bRecording)
+        elif key == space_KEY:
             setframe = framenum-4
             cap.set(cv2.CAP_PROP_POS_FRAMES,setframe)
             ret, frame = cap.read()
             numFrame = cap.get(cv2.CAP_PROP_POS_FRAMES)
             frame_process = preProcessing(frame,rotAngle,gamma) 
-            frameDisp(frame_process,numFrame,totalNumFrame,bRecording)
+            frameDisp(frame_process,filename,numFrame,totalNumFrame,bRecording)
 
     cv2.waitKey(1)
     cv2.destroyAllWindows()
@@ -405,13 +412,14 @@ def manualAnnotation(filename,videofile_path,savefile_path,trigframe,rotAngle,ga
 def videoTrimming(filename,videofile_path,logfile_path,savefile_path,startframe,endframe,trigframe,rotAngle,gamma,trimframe_pre,trimframe_post):
     # Initialization
     trimStartFrame_np = np.array(startframe)
-    trimStartFrame_np -= trimframe_pre
+    trimStartFrame_np = trimStartFrame_np + trigframe - trimframe_pre
     trimStartFrame = list(trimStartFrame_np)
-    trimEndFrame_np = np.array(endframe)
-    trimEndFrame_np += trimframe_post
+    trimEndFrame_np = np.array(endframe)    
+    trimEndFrame_np = trimEndFrame_np + trigframe + trimframe_post
     trimEndFrame = list(trimEndFrame_np)
 
     cap = cv2.VideoCapture(videofile_path)
+    totalframenum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     ret, frame = cap.read() 
     frame_process = preProcessing(frame,rotAngle,gamma) 
     h, w, ch = frame_process.shape
@@ -433,16 +441,18 @@ def videoTrimming(filename,videofile_path,logfile_path,savefile_path,startframe,
 
         # Video capture
         while(True):
-            frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) + 1
             ret,frame = cap.read()
+            frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+            if frameNum > totalframenum-1:
+            	break
             if frameNum < trimEndFrame[i]:
                 frame_process = preProcessing(frame,rotAngle,gamma) 
                 trimFrameNum += 1
-                text = filename + " Start: " + str(trimStartFrame[i]) + " Frame: " + str(trimFrameNum) 
+                text = filename + " Start: " + str(trimStartFrame[i]-trigframe) + " Frame: " + str(trimFrameNum) 
                 cv2.putText(frame_process,text,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
                 dst.write(frame_process) 
                 # Display
-                dispText = "Trial: " + str(i+1)  + ", Frame: " + str(frameNum) + ", Start: " + str(trimStartFrame[i]-trigframe+1) + ", Trim: " + str(trimFrameNum)
+                dispText = "Trial: " + str(i+1)  + ", Frame: " + str(frameNum) + ", Start: " + str(trimStartFrame[i]-trigframe) + ", Trim: " + str(trimFrameNum)
                 display(dispText)    
             else:
                 break
@@ -453,10 +463,12 @@ def videoTrimming(filename,videofile_path,logfile_path,savefile_path,startframe,
 #     os.remove(saveName)
     
     cap.release()
-
+    
     # write log file
+    f = open(logfile_path ,'a')
+    msg = "Total frame: " + str(totalframenum) + "\n"
+    f.write(msg)
     for i in range(trialnum):
-        f = open(logfile_path ,'a')
-        result = "Trial: " + str(i+1) + ", Start time from trig: " + str("{0:6.1f}".format((startframe[i]-trigframe+1)/fps)) + " s , Start frame: " + str(trimStartFrame[i]) + ", End frame: " + str(trimEndFrame[i]) + ", Duration: " + str(endframe[i]-startframe[i]+1) +"\n"
+        result = "Trial: " + str(i+1) + ", Start time from trig: " + str("{0:6.1f}".format((startframe[i]+1)/fps)) + " s , Start frame: " + str(trimStartFrame[i]-trigframe) + ", End frame: " + str(trimEndFrame[i]-trigframe) + ", Duration: " + str(trimEndFrame[i]-trimStartFrame[i]+1) +"\n"
         f.write(result)
     f.close()
