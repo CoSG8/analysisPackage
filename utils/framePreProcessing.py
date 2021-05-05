@@ -2,7 +2,7 @@
 coding: UTF-8
 movie trimming utils
 # by Akito Kosugi 
-# ver. 1.0   2020.10.15
+# ver. 1.1   2020.12.29
 
 """
 
@@ -24,6 +24,8 @@ def preProcessing(img,rot_angle,gammaVal):
         img_rot = cv2.rotate(img,cv2.ROTATE_90_COUNTERCLOCKWISE)
     elif rot_angle == 90:
         img_rot= cv2.rotate(img,cv2.ROTATE_90_CLOCKWISE)
+    elif rot_angle == 180:
+        img_rot= cv2.rotate(img,cv2.ROTATE_180)
     else:
         img_rot = img.copy()
     # Gamma conv

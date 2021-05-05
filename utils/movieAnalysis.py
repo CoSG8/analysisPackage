@@ -2,7 +2,7 @@
 coding: UTF-8
 movie trimming utils
 # by Akito Kosugi 
-# ver. 1.2.6   2020.12.12
+# ver. 1.2.8   2021.01.04
 
 """
 
@@ -443,13 +443,13 @@ def videoTrimming(filename,videofile_path,logfile_path,savefile_path,startframe,
         while(True):
             ret,frame = cap.read()
             frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-            if frameNum > totalframenum-1:
+            if frameNum > totalframenum-2:
             	break
-            if frameNum < trimEndFrame[i]:
+            elif frameNum < trimEndFrame[i]:
                 frame_process = preProcessing(frame,rotAngle,gamma) 
                 trimFrameNum += 1
                 text = filename + " Start: " + str(trimStartFrame[i]-trigframe) + " Frame: " + str(trimFrameNum) 
-                cv2.putText(frame_process,text,(10,30),font,0.7,(0,0,255),2,cv2.LINE_AA)
+                cv2.putText(frame_process,text,(10,30),font,0.6,(0,0,255),2,cv2.LINE_AA)
                 dst.write(frame_process) 
                 # Display
                 dispText = "Trial: " + str(i+1)  + ", Frame: " + str(frameNum) + ", Start: " + str(trimStartFrame[i]-trigframe) + ", Trim: " + str(trimFrameNum)
