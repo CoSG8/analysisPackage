@@ -1,7 +1,7 @@
 # coding: UTF-8
 # frameSelection_Calib.py
 # Akito Kosugi 
-# ver.1.0.3    2020.05.08
+# ver.1.1    2021.08.31
 
 # Import
 import cv2
@@ -9,10 +9,9 @@ import sys
 import os
 import tkinter
 import tkinter.filedialog
-import deeplabcut
 import numpy as np
 from IPython.core.display import display
-from deeplabcut.utils import frameselectiontools
+from utils import frameselectiontools
 
 # Initialization
 ledTh = 30
@@ -207,7 +206,7 @@ h, w, ch = frame.shape
 coords = [0,w,0,h]
 totalFrameNum = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 start = float(ledFrame[0]/totalFrameNum)
-frames2pick =frameselectiontools.KmeansbasedFrameselectioncv2(cap,numframes2pick-1,start,stop,crop,coords,step=cluster_step,resizewidth=cluster_resizewidth,color=cluster_color)
+frames2pick = frameselectiontools.KmeansbasedFrameselectioncv2(cap,numframes2pick-1,start,stop,crop,coords,step=cluster_step,resizewidth=cluster_resizewidth,color=cluster_color)
 frames2pick_np = np.array(frames2pick)
 frames2pick_np -= ledFrame[0]
 cap.release()
