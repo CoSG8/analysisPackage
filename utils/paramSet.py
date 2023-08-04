@@ -2,7 +2,7 @@
 coding: UTF-8
 movie trimming utils
 # by Akito Kosugi 
-# ver. 1.1   2020.10.24
+# ver. 1.1.1   2023.08.04
 
 """
 
@@ -15,8 +15,8 @@ from utils import framePreProcessing
 # In[Initialization]
 gamma = 1
 rotAngle = 0
-roiW = 30
-roiH = 30
+roiW = 20
+roiH = 20
 num_LED = 2
 ledTh1 = 15
 search_color1 = 1
@@ -78,7 +78,7 @@ def LED(filename,frame):
     cv2.imshow("ParamSet2",frame_1st)
     cv2.setMouseCallback("ParamSet2",get_position1)
     cv2.createTrackbar("LED th","ParamSet2",ledTh1,255,onTrackbar4)
-    cv2.createTrackbar("Color","ParamSet2",search_color1,2,onTrackbar5)
+    cv2.createTrackbar("Color","ParamSet2",search_color1,3,onTrackbar5)
 
     while(True):
         key = cv2.waitKey(0)
@@ -106,7 +106,7 @@ def trimming_LED(filename,frame):
     cv2.imshow("ParamSet3",frame_1st)
     cv2.setMouseCallback("ParamSet3",get_position2)
     cv2.createTrackbar("LED th","ParamSet3",ledTh2,255,onTrackbar6)
-    cv2.createTrackbar("Color","ParamSet3",search_color2,2,onTrackbar7)
+    cv2.createTrackbar("Color","ParamSet3",search_color2,3,onTrackbar7)
     cv2.createTrackbar("Pre","ParamSet3",trimframe_pre,1200,onTrackbar8)
     cv2.createTrackbar("Post","ParamSet3",trimframe_post,1200,onTrackbar9)
 
