@@ -2,7 +2,7 @@
 coding: UTF-8
 movie trimming utils
 # by Akito Kosugi 
-# ver. 1.2.8   2021.01.04
+# ver. 1.2.9   2023.08.04
 
 """
 
@@ -46,10 +46,12 @@ def LEDdetection_1st(filename,videofile_path,logfile_path,savefile_path,rotAngle
 
         # LED Detection
         roiFrame = frame_process[roiY1:roiY1+roiH,roiX1:roiX1+roiW]
-        if searchColor1 < 2:
-            sumVal = roiFrame.T[searchColor1].flatten().mean() - roiFrame.T[2].flatten().mean()
+        if searchColor2 == 3:
+            sumVal = roiFrame.T[0].flatten().mean()      
+        elif searchColor2 == 2:
+            sumVal = roiFrame.T[searchColor2].flatten().mean() - roiFrame.T[1].flatten().mean()            
         else:
-            sumVal = roiFrame.T[searchColor1].flatten().mean() - roiFrame.T[1].flatten().mean()            
+            sumVal = roiFrame.T[searchColor2].flatten().mean() - roiFrame.T[2].flatten().mean()         
         if sumVal > ledTh1:
             if bLED == False:
                 bLED_on = True
@@ -125,10 +127,13 @@ def LEDdetection(filename,videofile_path,savefile_path,trigframe,trigEnd_frame,r
 
         # LED Detection
         roiFrame = frame_process[roiY2:roiY2+roiH,roiX2:roiX2+roiW]
-        if searchColor2 < 2:
-            sumVal = roiFrame.T[searchColor2].flatten().mean() - roiFrame.T[2].flatten().mean()
-        else:
+        if searchColor2 == 3:
+            sumVal = roiFrame.T[0].flatten().mean()      
+        elif searchColor2 == 2:
             sumVal = roiFrame.T[searchColor2].flatten().mean() - roiFrame.T[1].flatten().mean()            
+        else:
+            sumVal = roiFrame.T[searchColor2].flatten().mean() - roiFrame.T[2].flatten().mean()
+
         if sumVal > ledTh2:
             if bLED == False:
                 bLED_on = True
@@ -469,6 +474,6 @@ def videoTrimming(filename,videofile_path,logfile_path,savefile_path,startframe,
     msg = "Total frame: " + str(totalframenum) + "\n"
     f.write(msg)
     for i in range(trialnum):
-        result = "Trial: " + str(i+1) + ", Start time from trig: " + str("{0:6.1f}".format((startframe[i]+1)/fps)) + " s , Start frame: " + str(trimStartFrame[i]-trigframe) + ", End frame: " + str(trimEndFrame[i]-trigframe) + ", Duration: " + str(trimEndFrame[i]-trimStartFrame[i]+1) +"\n"
+        result = "Trial: " + str(i+1) + ", Start time from trig: " + str("{0:6.1f}".format((startframe[i]+1)/fps)) + " s , Trig frame: " + str(startframe[i]-trigframe) + ", Start frame: " + str(trimStartFrame[i]-trigframe) + ", End frame: " + str(trimEndFrame[i]-trigframe) + ", Duration: " + str(trimEndFrame[i]-trimStartFrame[i]+1) +"\n"
         f.write(result)
     f.close()
